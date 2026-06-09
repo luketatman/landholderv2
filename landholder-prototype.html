@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>landholder — prototype</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c2330; --border:#2a3340;
+    --text:#e6edf3; --muted:#8b97a7; --accent:#4ea1ff; --good:#3fb950;
+    --warn:#d29922; --bad:#f85149; --r:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 80px}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand h1{font-size:24px;margin:0;letter-spacing:-.02em}
+  .brand .dot{color:var(--accent)}
+  .tag{color:var(--muted);font-size:14px;margin:2px 0 22px}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .badge.proto{border-color:var(--warn);color:var(--warn)}
+  /* steps */
+  .crumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .crumb{font-size:12px;color:var(--muted);padding:6px 12px;border:1px solid var(--border);border-radius:20px}
+  .crumb.active{color:#00132b;background:var(--accent);border-color:var(--accent);font-weight:600}
+  .crumb.done{color:var(--good);border-color:var(--good)}
+  .step{display:none;animation:fade .25s ease}
+  .step.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* search */
+  .search{display:flex;gap:10px;margin:8px 0}
+  .search input{flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:14px 16px;border-radius:var(--r);font-size:15px;outline:none}
+  .search input:focus{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#00132b;border:none;font-weight:650;
+    padding:0 22px;border-radius:var(--r);cursor:pointer;font-size:15px}
+  button.primary.big{padding:13px 22px}
+  .hint{color:var(--muted);font-size:12.5px;margin:4px 0 0}
+  .hint code{background:var(--panel2);padding:2px 6px;border-radius:6px}
+  /* cards */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:18px}
+  .grid.three{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:780px){.grid,.grid.three{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+  .card.anchor{grid-column:1/-1;border-color:var(--accent)}
+  .card h2{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .big{font-size:22px;font-weight:650;letter-spacing:-.01em}
+  .rows{display:grid;gap:9px;margin-top:12px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding-bottom:8px;border-bottom:1px dashed var(--border)}
+  .row:last-child{border-bottom:none;padding-bottom:0}
+  .row .k{color:var(--muted);font-size:13px}
+  .row .v{font-size:14px;text-align:right}
+  .map{grid-column:1/-1;height:200px;border:1px dashed var(--border);border-radius:var(--r);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;
+    background:repeating-linear-gradient(45deg,var(--panel),var(--panel) 12px,var(--panel2) 12px,var(--panel2) 24px)}
+  .sectionhead{margin:30px 0 12px;font-size:16px}
+  .sub{color:var(--muted);font-size:13px;font-weight:400}
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:11px 17px;border-radius:22px;cursor:pointer;font-size:14px}
+  .chip:hover{border-color:var(--accent)}
+  .chip.active{background:var(--accent);color:#00132b;border-color:var(--accent);font-weight:600}
+  /* site plan */
+  .planwrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:780px){.planwrap{grid-template-columns:1fr}}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 12px}
+  .stat .b{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .stat .b .n{font-size:21px;font-weight:650}
+  .stat .b .l{color:var(--muted);font-size:12px;margin-top:2px}
+  .svgbox{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+  .svgbox svg{display:block;width:100%;height:auto}
+  .svgcap{padding:9px 13px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+  /* nav */
+  .nav{display:flex;gap:12px;margin-top:22px;align-items:center}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);
+    padding:11px 20px;border-radius:var(--r);cursor:pointer;font-size:14px}
+  button.good{background:var(--good);color:#04210b;border:none;font-weight:650;
+    padding:12px 22px;border-radius:var(--r);cursor:pointer;font-size:14px}
+  label.fld{display:block;margin:0 0 12px}
+  label.fld span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+  label.fld select,label.fld input{width:100%;background:var(--panel2);border:1px solid var(--border);
+    color:var(--text);padding:11px 12px;border-radius:9px;font-size:14px}
+  .render{height:240px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-size:13px;border:1px dashed var(--border);
+    background:linear-gradient(160deg,#1c2a3a,#161b22)}
+  .muted{color:var(--muted)}
+  .acwrap{position:relative;flex:1}
+  .acwrap input{width:100%}
+  .suggest{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--panel);
+    border:1px solid var(--border);border-radius:var(--r);z-index:30;overflow:hidden;display:none;
+    box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .suggest.show{display:block}
+  .sg{padding:11px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border)}
+  .sg:last-child{border-bottom:none}
+  .sg:hover{background:var(--panel2)}
+  .sg .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .sg .empty{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><h1>landholder<span class="dot">.</span></h1>
+    <span class="badge proto">prototype · real address lookup, sample site data</span></div>
+  <p class="tag">Type an address → feasibility → tell us what to build → site plan → rendering &amp; cost.</p>
+
+  <div class="crumbs">
+    <div class="crumb" data-c="0">1 · Find site</div>
+    <div class="crumb" data-c="1">2 · Feasibility</div>
+    <div class="crumb" data-c="2">3 · What to build</div>
+    <div class="crumb" data-c="3">4 · Site plan</div>
+    <div class="crumb" data-c="4">5 · Build &amp; render</div>
+  </div>
+
+  <!-- STEP 0 — search -->
+  <section class="step show" id="s0">
+    <div class="search">
+      <div class="acwrap">
+        <input id="addr" autocomplete="off" placeholder="Start typing a real address…" />
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <button class="primary" onclick="lookup()">Analyze site</button>
+    </div>
+    <p class="hint">Real address lookup — pick a suggestion, then Analyze. The site details below are still sample data until the parcel &amp; Census APIs are connected.</p>
+  </section>
+
+  <!-- STEP 1 — feasibility -->
+  <section class="step" id="s1">
+    <div class="grid">
+      <div class="card anchor">
+        <h2>Parcel</h2>
+        <div class="big" id="f_parcel">—</div>
+        <div class="rows" id="f_parcelrows"></div>
+      </div>
+      <div class="map" id="f_map">overhead imagery placeholder</div>
+      <div class="card"><h2>Demographics (county)</h2><div class="rows" id="f_demo"></div></div>
+      <div class="card"><h2>Nearby</h2><div class="rows" id="f_near"></div></div>
+      <div class="card"><h2>Water &amp; terrain</h2><div class="rows" id="f_water"></div></div>
+      <div class="card"><h2>Constraints</h2><div class="rows" id="f_con"></div></div>
+    </div>
+    <div class="nav">
+      <button class="ghost" onclick="go(0)">← New search</button>
+      <button class="primary big" onclick="go(2)">What can I build here? →</button>
+    </div>
+  </section>
+
+  <!-- STEP 2 — intent -->
+  <section class="step" id="s2">
+    <h2 class="sectionhead">What do you want to build here? <span class="sub">— pick a use</span></h2>
+    <div class="chips" id="intent"></div>
+    <div class="nav"><button class="ghost" onclick="go(1)">← Back</button></div>
+  </section>
+
+  <!-- STEP 3 — site plan -->
+  <section class="step" id="s3">
+    <h2 class="sectionhead" id="p_title">Site plan</h2>
+    <div class="planwrap">
+      <div class="card">
+        <h2>Program</h2>
+        <div class="stat" id="p_stat"></div>
+        <div class="rows" id="p_rows"></div>
+      </div>
+      <div class="svgbox">
+        <div id="p_svg"></div>
+        <div class="svgcap"><span>Overhead site plan · schematic massing</span><span id="p_dim"></span></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="ghost" onclick="go(2)">← Change use</button>
+      <button class="good" onclick="go(4)">Approve &amp; continue →</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 — build & render -->
+  <section class="step" id="s4">
+    <h2 class="sectionhead">Build details &amp; rendering</h2>
+    <div class="grid">
+      <div class="card">
+        <h2>How do you want to build it?</h2>
+        <label class="fld"><span>Construction method</span>
+          <select id="b_method" onchange="recost()">
+            <option>Wood frame (Type V)</option><option>Light-gauge steel</option>
+            <option>Mass timber (CLT)</option><option>Concrete / masonry</option><option>Modular / prefab</option>
+          </select></label>
+        <label class="fld"><span>Material tier</span>
+          <select id="b_tier" onchange="recost()">
+            <option>Economy</option><option selected>Mid</option><option>High-end</option>
+          </select></label>
+        <label class="fld"><span>Builder</span>
+          <select id="b_gc" onchange="recost()">
+            <option>Local general contractor</option><option>Regional builder</option><option>Institutional / national GC</option>
+          </select></label>
+      </div>
+      <div class="card">
+        <h2>Rough cost to build</h2>
+        <div class="stat" id="c_stat"></div>
+        <div class="rows" id="c_rows"></div>
+      </div>
+      <div class="card anchor">
+        <h2>Rendering</h2>
+        <div class="render">upload a site photo or use Street View → AI rendering appears here</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="ghost" onclick="go(3)">← Back to site plan</button>
+      <button class="primary big" onclick="go(0)">Start another site</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---------- deterministic sample data (stable per address) ---------- */
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return Math.abs(h)}
+const ZONES=[
+ {c:"AG-1",d:"Agricultural",far:.1,uses:["retreat","single_family"]},
+ {c:"RR",d:"Rural Residential",far:.2,uses:["retreat","single_family","hotel"]},
+ {c:"R-1",d:"Residential, low density",far:.4,uses:["single_family","multifamily"]},
+ {c:"C-2",d:"General Commercial",far:1.5,uses:["hotel","retail","mixed_use"]},
+ {c:"MU",d:"Mixed Use",far:2.0,uses:["multifamily","retail","hotel","mixed_use"]},
+];
+const TYPES={
+ retreat:{label:"Retreat / lodge + cabins",cov:.12,fl:1,gsf:700,park:1,yl:"cabins"},
+ hotel:{label:"Hotel",cov:.35,fl:3,gsf:650,park:1,yl:"keys"},
+ multifamily:{label:"Multifamily housing",cov:.35,fl:3,gsf:1000,park:1.5,yl:"units"},
+ single_family:{label:"Single-family subdivision",cov:.22,fl:2,gsf:2200,park:2,yl:"lots"},
+ retail:{label:"Retail / commercial",cov:.25,fl:1,gsf:1,park:0,yl:"sq ft GLA"},
+ mixed_use:{label:"Mixed use",cov:.4,fl:4,gsf:1000,park:1.2,yl:"units"},
+};
+const COSTBASE={ "Wood frame (Type V)":210,"Light-gauge steel":245,"Mass timber (CLT)":290,"Concrete / masonry":275,"Modular / prefab":195 };
+const TIER={Economy:.85,Mid:1,"High-end":1.35};
+const GC={"Local general contractor":.92,"Regional builder":1,"Institutional / national GC":1.18};
+
+let SITE=null, CHOICE=null, SELECTED=null;
+
+function lookup(){
+  const raw=(document.getElementById('addr').value||'').trim();
+  if(!raw){return}
+  const real = (SELECTED && SELECTED.label===raw) ? SELECTED : null;
+  const h=hash(raw);
+  const z=ZONES[h%ZONES.length];
+  const acres=Math.round((2+(h%4800)/100)*100)/100;
+  const flood=["X","X","X","AE","A","VE"][h%6];
+  const slope=Math.round((h%1800)/100*10)/10;
+  const wet=h%5===0;
+  SITE={raw,h,z,acres,flood,slope,wet,
+    real:!!real,
+    lat: real ? (+real.lat).toFixed(5) : (30+(h%1500)/100).toFixed(4),
+    lng: real ? (+real.lng).toFixed(5) : (-110+((h>>4)%3000)/100).toFixed(4),
+    pop:8000+(h%1200000), income:42000+(h%80000), age:31+(h%20),
+    grocery:Math.round((.4+(h%1200)/100)*100)/100,
+    water:{t:["stream","creek","lake","river"][h%4],d:Math.round((.1+(h%400)/100)*100)/100},
+    elev:200+(h%5000)
+  };
+  renderFeas(); go(1);
+}
+
+function rowsHTML(pairs){return pairs.map(p=>`<div class="row"><span class="k">${p[0]}</span><span class="v">${p[1]}</span></div>`).join('')}
+function money(n){return '$'+Math.round(n).toLocaleString()}
+
+function renderFeas(){
+  const s=SITE;
+  document.getElementById('f_parcel').textContent='Parcel '+(1000000+s.h%9000000);
+  document.getElementById('f_parcelrows').innerHTML=rowsHTML([
+    ['Acreage',s.acres+' ac'],['Zoning',s.z.c+' · '+s.z.d],
+    ['Max floor-area ratio',s.z.far],['Approx. location',s.lat+', '+s.lng]]);
+  const mapEl=document.getElementById('f_map');
+  if(s.real){
+    const d=0.003, la=+s.lat, lo=+s.lng;
+    const bbox=[(lo-d).toFixed(5),(la-d).toFixed(5),(lo+d).toFixed(5),(la+d).toFixed(5)].join(',');
+    mapEl.style.padding='0';mapEl.style.background='var(--panel)';mapEl.style.border='1px solid var(--border)';
+    mapEl.innerHTML='<iframe title="site map" style="border:0;width:100%;height:200px;display:block;border-radius:12px" src="https://www.openstreetmap.org/export/embed.html?bbox='+bbox+'&layer=mapnik&marker='+la+','+lo+'"></iframe>';
+  } else {
+    mapEl.innerHTML='';mapEl.textContent='▣ overhead @ '+s.lat+', '+s.lng+' — map goes here';
+  }
+  document.getElementById('f_demo').innerHTML=rowsHTML([
+    ['Population',s.pop.toLocaleString()],['Median income',money(s.income)],['Median age',s.age]]);
+  document.getElementById('f_near').innerHTML=rowsHTML([
+    ['Nearest grocery',s.grocery+' mi'],['Schools','0.8 mi'],['Entertainment','2.2 mi'],['Highway access','1.0 mi']]);
+  document.getElementById('f_water').innerHTML=rowsHTML([
+    ['Nearest '+s.water.t,s.water.d+' mi'],['Elevation',s.elev.toLocaleString()+' ft'],['Slope',s.slope+'%']]);
+  document.getElementById('f_con').innerHTML=rowsHTML([
+    ['Flood zone',s.flood+(s.flood==='X'?' (minimal)':' (special hazard)')],
+    ['Wetlands',s.wet?'present':'none detected'],
+    ['Septic suitability',s.slope>15?'limited':'moderate']]);
+  // intent chips
+  document.getElementById('intent').innerHTML=Object.keys(TYPES).map(t=>
+    `<div class="chip" onclick="choose('${t}')">${TYPES[t].label}</div>`).join('');
+}
+
+function choose(t){
+  CHOICE=t;
+  document.querySelectorAll('#intent .chip').forEach((c,i)=>c.classList.toggle('active',Object.keys(TYPES)[i]===t));
+  renderPlan(); go(3);
+}
+
+function computeProgram(){
+  const s=SITE,d=TYPES[CHOICE], A=s.acres*43560;
+  let flood=s.flood==='VE'?.6:(s.flood==='AE'||s.flood==='A')?.25:0;
+  let slopeF=s.slope>25?.5:s.slope>15?.3:0;
+  let wetF=s.wet?.12:0;
+  const net=Math.max(0,A*(1-flood-slopeF-wetF));
+  const farArea=A*s.z.far;
+  const footprint=Math.min(net*d.cov,farArea);
+  const floors=Math.max(1,Math.min(Math.round(farArea/Math.max(footprint,1)),d.fl));
+  const gsf=Math.min(farArea,footprint*floors);
+  let yield_, parking;
+  if(CHOICE==='single_family'){yield_=Math.floor(net*.75/10890);parking=yield_*2;}
+  else if(CHOICE==='retail'){yield_=Math.round(gsf);parking=Math.round(gsf/1000*4);}
+  else {yield_=Math.floor(gsf*.85/d.gsf);parking=Math.round(yield_*d.park);}
+  return {netAc:Math.round(net/43560*10)/10,farArea:Math.round(farArea),footprint:Math.round(footprint),
+    floors,gsf:Math.round(gsf),yield_,parking,yl:d.yl};
+}
+
+function renderPlan(){
+  const p=computeProgram(),s=SITE;
+  document.getElementById('p_title').innerHTML=TYPES[CHOICE].label+' <span class="sub">— '+s.acres+' ac, zoned '+s.z.c+'</span>';
+  document.getElementById('p_stat').innerHTML=`
+    <div class="b"><div class="n">${p.yield_.toLocaleString()}</div><div class="l">${p.yl}</div></div>
+    <div class="b"><div class="n">${p.gsf.toLocaleString()}</div><div class="l">buildable sq ft</div></div>
+    <div class="b"><div class="n">${p.floors}</div><div class="l">floors</div></div>
+    <div class="b"><div class="n">${p.parking.toLocaleString()}</div><div class="l">parking stalls</div></div>`;
+  document.getElementById('p_rows').innerHTML=rowsHTML([
+    ['Gross site',s.acres+' ac'],['Net developable',p.netAc+' ac'],
+    ['Building footprint',p.footprint.toLocaleString()+' sq ft'],
+    ['Max floor area (FAR)',p.farArea.toLocaleString()+' sq ft']]);
+  document.getElementById('p_svg').innerHTML=sitePlanSVG(p,s);
+  document.getElementById('p_dim').textContent=Math.round(Math.sqrt(s.acres*43560))+' ft sq (approx)';
+  recost();
+}
+
+function sitePlanSVG(p,s){
+  const side=Math.sqrt(s.acres*43560), pad=side*.07, W=side+pad*2, H=side+pad*2;
+  const inset={x:pad+20,y:pad+25,w:side-40,h:side-45};
+  // building zone (top ~55%), parking below
+  const bz={x:inset.x,y:inset.y,w:inset.w,h:inset.h*(p.parking>0?.55:.8)};
+  const pz={x:inset.x,y:inset.y+inset.h*.6,w:inset.w,h:inset.h*.4};
+  // pack building footprints
+  let count = CHOICE==='single_family'?Math.min(p.yield_,40):CHOICE==='retreat'?Math.min(p.yield_+1,30):Math.max(1,Math.min(Math.round(p.footprint/12000),12));
+  let per=p.footprint/count, sd=Math.max(14,Math.sqrt(per)), gap=sd*.25, cx=bz.x, cy=bz.y, rowh=0, rects='';
+  for(let i=0;i<count;i++){
+    if(cx+sd>bz.x+bz.w){cx=bz.x;cy+=rowh+gap;rowh=0}
+    if(cy+sd>bz.y+bz.h&&i>0)break;
+    rects+=`<rect x="${cx.toFixed(0)}" y="${cy.toFixed(0)}" width="${sd.toFixed(0)}" height="${sd.toFixed(0)}" rx="2" fill="#4ea1ff" fill-opacity=".85" stroke="#0b3a66"/>`;
+    cx+=sd+gap; rowh=Math.max(rowh,sd);
+  }
+  const drive=`<rect x="${(inset.x+inset.w/2-12).toFixed(0)}" y="${(pz.y).toFixed(0)}" width="24" height="${(H-pad-pz.y).toFixed(0)}" fill="#2a3340"/>`;
+  const noBuild=(s.flood!=='X'||s.slope>15||s.wet)?`<rect x="${pad}" y="${(H-pad-side*.18).toFixed(0)}" width="${(side*.5).toFixed(0)}" height="${(side*.18).toFixed(0)}" fill="#3a2a12" stroke="#d29922" stroke-dasharray="6 5"/>`:'';
+  const sw=Math.max(2,side/250);
+  return `<svg viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" xmlns="http://www.w3.org/2000/svg" style="background:#0e1116">
+    <rect x="${pad}" y="${pad}" width="${side}" height="${side}" fill="#161b22" stroke="#4ea1ff" stroke-width="${sw*1.3}"/>
+    <rect x="${inset.x}" y="${inset.y}" width="${inset.w}" height="${inset.h}" fill="none" stroke="#8b97a7" stroke-dasharray="${sw*4} ${sw*3}" stroke-width="${sw}"/>
+    ${noBuild}${drive}
+    ${p.parking>0?`<rect x="${pz.x}" y="${pz.y}" width="${pz.w}" height="${pz.h}" fill="#1c2330" stroke="#39424f" stroke-width="${sw}"/>`:''}
+    ${rects}
+    <g transform="translate(${(W-pad-14).toFixed(0)},${(pad+34).toFixed(0)})"><line x1="0" y1="0" x2="0" y2="-24" stroke="#e6edf3" stroke-width="2"/><polygon points="0,-30 -5,-21 5,-21" fill="#e6edf3"/><text x="0" y="14" fill="#8b97a7" font-size="${side/55}" text-anchor="middle">N</text></g>
+  </svg>`;
+}
+
+function recost(){
+  if(!CHOICE)return;
+  const p=computeProgram();
+  const base=COSTBASE[document.getElementById('b_method').value];
+  const tier=TIER[document.getElementById('b_tier').value];
+  const gc=GC[document.getElementById('b_gc').value];
+  const psf=base*tier*gc;
+  const hard=psf*p.gsf;
+  const soft=hard*.22, land=0, total=hard+soft;
+  const perUnit=p.yield_>0&&CHOICE!=='retail'?total/p.yield_:0;
+  document.getElementById('c_stat').innerHTML=`
+    <div class="b"><div class="n">${money(total)}</div><div class="l">total est. build cost</div></div>
+    <div class="b"><div class="n">$${Math.round(psf)}</div><div class="l">per sq ft (all-in shell)</div></div>`;
+  document.getElementById('c_rows').innerHTML=rowsHTML([
+    ['Hard costs',money(hard)],['Soft costs (22%)',money(soft)],
+    ['Buildable area',p.gsf.toLocaleString()+' sq ft'],
+    [CHOICE==='retail'?'—':'Per '+TYPES[CHOICE].yl.replace(/s$/,''), perUnit?money(perUnit):'—']]);
+}
+
+function go(n){
+  document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('show',i===n));
+  document.querySelectorAll('.crumb').forEach((c,i)=>{
+    c.classList.toggle('active',i===n);
+    c.classList.toggle('done',i<n);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+const addrEl=document.getElementById('addr');
+const sugEl=document.getElementById('suggest');
+let acItems=[], acTimer=null;
+addrEl.addEventListener('input',()=>{
+  SELECTED=null;
+  const q=addrEl.value.trim();
+  clearTimeout(acTimer);
+  if(q.length<3){hideSug();return}
+  acTimer=setTimeout(()=>fetchSug(q),250);
+});
+addrEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault(); if(acItems.length){pick(0)} else {lookup()}}
+  else if(e.key==='Escape'){hideSug()}
+});
+document.addEventListener('click',e=>{if(e.target!==addrEl && !sugEl.contains(e.target))hideSug()});
+function hideSug(){sugEl.classList.remove('show');sugEl.innerHTML='';}
+function fmtAddr(p){
+  const street=[p.housenumber,p.street].filter(Boolean).join(' ');
+  const main=street||p.name||p.city||'Unnamed';
+  const sub=[p.city,p.state,p.postcode,p.country].filter(Boolean).join(', ');
+  return {main,sub};
+}
+async function fetchSug(q){
+  sugEl.innerHTML='<div class="sg"><span class="empty">Searching…</span></div>';
+  sugEl.classList.add('show');
+  try{
+    const r=await fetch('https://photon.komoot.io/api/?limit=6&lang=en&q='+encodeURIComponent(q));
+    const d=await r.json();
+    acItems=(d.features||[]).filter(f=>!f.properties.countrycode||f.properties.countrycode==='US').slice(0,6);
+    if(!acItems.length){sugEl.innerHTML='<div class="sg"><span class="empty">No US matches yet — keep typing</span></div>';return;}
+    sugEl.innerHTML=acItems.map((f,i)=>{const a=fmtAddr(f.properties);return '<div class="sg" onclick="pick('+i+')">'+a.main+'<span class="sub">'+a.sub+'</span></div>';}).join('');
+  }catch(err){
+    sugEl.innerHTML='<div class="sg"><span class="empty">Address lookup unreachable — type the address and click Analyze</span></div>';
+  }
+}
+function pick(i){
+  const f=acItems[i]; if(!f)return;
+  const a=fmtAddr(f.properties), c=f.geometry.coordinates;
+  const label=[a.main,a.sub].filter(Boolean).join(', ');
+  SELECTED={label,lat:c[1],lng:c[0]};
+  addrEl.value=label; hideSug(); lookup();
+}
+</script>
+</body>
+</html>
